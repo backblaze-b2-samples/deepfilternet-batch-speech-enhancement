@@ -13,6 +13,28 @@ Built for podcast studios, broadcast archives, and speech-dataset curators who n
 reproducible, auditable denoise step that downstream transcription / TTS / distribution
 jobs can read straight from object storage over the S3 API.
 
+## What it looks like
+
+**Dashboard** — denoising metrics (recordings enhanced, enhanced bytes written, write-amplification ratio, average SNR improvement), a 7-day bytes-written chart, and recent jobs.
+
+![Dashboard with denoising metrics, a 7-day bytes-written chart, and recent jobs](docs/images/dashboard.png)
+
+**Enhancement Jobs** — every batch denoise run with file counts, source-to-enhanced size, average SNR gain, status, and re-run / delete actions.
+
+![Enhancement jobs list with per-batch size, SNR gain, and actions](docs/images/jobs.png)
+
+**Job detail** — per-file SNR results and before/after players for one batch, each with an enhanced-WAV download.
+
+![Job detail with per-file SNR results and before/after players](docs/images/job-detail.png)
+
+**Audio Library** — source recordings paired with their enhanced outputs for before/after playback, streamed straight from B2.
+
+![Audio Library with source and enhanced players per recording](docs/images/library.png)
+
+**Upload** — drag-and-drop ingest of noisy recordings to the B2 `source/` prefix, ready to pick when creating a job.
+
+![Upload page with a drag-and-drop dropzone for noisy recordings](docs/images/upload.png)
+
 ## The B2 story: write amplification
 
 A compressed-MP3 archive produces an equal-or-**larger** set of *uncompressed* 48 kHz
