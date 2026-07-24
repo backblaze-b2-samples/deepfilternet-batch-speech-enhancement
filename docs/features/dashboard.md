@@ -31,6 +31,9 @@ At-a-glance denoising metrics, with **write amplification** as the hero metric.
 - `GET /jobs` (for the recent-jobs table) → `JobSummary[]`
 
 ## Flow
+- Header actions: **Upload recordings** (→ `/upload`, secondary) and **New enhancement**
+  (→ `/jobs/new`, primary) give a fresh user an entry point to the first step (upload)
+  alongside job creation
 - Page loads → parallel calls for stats, bytes-activity, and recent jobs
 - Stat cards show the four denoising metrics; the ratio is the write-amplification hero number
 - The bar chart plots source vs enhanced MB written per day (last 7 days)

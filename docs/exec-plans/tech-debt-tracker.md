@@ -24,6 +24,19 @@ Known tech debt items. Agents update this when they discover or create tech debt
 | `api-client.ts` hand-synced to FastAPI | Endpoint drift between client and server | Note an OpenAPI codegen strategy or link the spec | Low |
 | No dedicated connection-status banner | Offline only surfaced reactively per failed query | Add a global connectivity banner (route + global error boundaries already exist) | Low |
 
+## 2026-07-24 — verify
+
+Nitpicks surfaced by the 3-lens verify funnel (goal: batch DeepFilterNet enhancement via `/jobs/new` → hear before/after → download). None block the goal; captured here so they never re-loop.
+
+- Dashboard — the "Bytes Written" chart Y-axis tick labels are non-monotonic (read "0M, 5M, 0M, 5M, 0M" top-to-bottom) while the bars themselves render correctly → the chart's Y-axis tick formatter/domain is wrong; misleading on the landing page (shot: `.local/verify/C/r2-05-dashboard.png`)
+- Dashboard — "Write Amplification" (bucket-wide `enhanced_bytes / source_bytes`) grows ~linearly with job count because each job writes a fresh `enhanced/<job_id>/` copy while `source/` stays constant, so it reads e.g. 17.64× though per-run amplification is ~1.0× for WAV inputs → a first-time user could misread it as "outputs are 17× larger than inputs" (shot: `.local/verify/C/r2-05-dashboard.png`)
+- Dashboard — "Avg SNR Improvement" tile is a bucket-wide mean across all jobs (by design in `enhancement_stats.py`), not the latest/selected job → can be misread as a single-job metric (shot: `.local/verify/C/r2-05-dashboard.png`)
+- `/jobs/new` (run in progress) — mid-run shows a disabled "Enhancing…" button + an aria-live status line but no spinner icon or progress bar, and nothing animates during the ~6s synchronous run → acceptable per rubric for a short op, but a determinate/animated indicator would read better (shot: `.local/verify/B/r2-05-run-inprogress.png`)
+- `/upload` (after upload) — the "Continue to enhancement" CTA's accessible name is "Continue to create an enhancement job" (visible label ≠ accessible name, WCAG 2.5.3 label-in-name) → harmless to sighted users but breaks name-based AT/automation expectations (shot: `.local/verify/A/r2-06-upload-complete.png`)
+- `/jobs/[jobId]` — the job detail page has before/after players + per-file downloads but no in-content link to the Library; only the sidebar reaches it → minor wayfinding gap (the goal completes on the detail page) (shot: `.local/verify/A/r2-08-job-detail.png`)
+- Sidebar nav — order is Dashboard, Jobs, Library, Upload, Files, so Upload sits below the two screens that consume its output → slight mismatch with the first-run Upload→Jobs→Library mental model (shot: `.local/verify/A/01-dashboard.png`)
+- `/jobs/[jobId]` — a transient success toast ("Enhanced 3 recording(s)") overlaps the first file's "Download enhanced" button at the instant of capture → cosmetic timing overlap only; the button is reachable and the toast auto-dismisses (shot: `.local/verify/C/r2-02-run1-detail.png`)
+
 ## Resolved
 
 | Description | Resolution |

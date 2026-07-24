@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
+import { AudioWaveform } from "lucide-react";
 import { toast } from "sonner";
 import type { FileRejection } from "react-dropzone";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -203,6 +205,7 @@ export function UploadForm() {
   const hasCompleted = items.some(
     (i) => i.status === "complete" || i.status === "error"
   );
+  const hasSuccess = items.some((i) => i.status === "complete");
   const uploadSummary = getUploadSummary(items);
 
   return (
@@ -230,7 +233,7 @@ export function UploadForm() {
           onRetry={retryUpload}
         />
         {hasCompleted && !uploading && (
-          <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               aria-label="Clear completed and failed uploads"
               variant="outline"
@@ -239,6 +242,18 @@ export function UploadForm() {
             >
               Clear finished
             </Button>
+            {hasSuccess && (
+              <Button
+                asChild
+                size="sm"
+                aria-label="Continue to create an enhancement job"
+              >
+                <Link href="/jobs/new">
+                  <AudioWaveform className="h-3.5 w-3.5" />
+                  Continue to enhancement
+                </Link>
+              </Button>
+            )}
           </div>
         )}
       </CardContent>

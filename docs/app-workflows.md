@@ -7,6 +7,8 @@ User journeys inside the application.
 
 1. **Upload** — user navigates to `/upload` and drops noisy speech recordings
    (WAV/MP3/FLAC/OGG). Files are validated and stored to B2 under the `source/` prefix.
+   Once at least one file uploads successfully, a **Continue to enhancement** CTA links
+   straight to `/jobs/new` so the happy path auto-chains.
 2. **Create a job** — user navigates to `/jobs/new`, names the batch, picks one or more
    source recordings (multi-select), and chooses denoising options (attenuation limit
    selector; post-filter switch). Submitting runs DeepFilterNet over every selected file.

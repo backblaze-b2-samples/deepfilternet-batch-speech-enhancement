@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AudioWaveform } from "lucide-react";
+import { AudioWaveform, Upload } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -16,12 +16,20 @@ export default function DashboardPage() {
             Batch speech denoising with DeepFilterNet, stored on Backblaze B2.
           </p>
         </div>
-        <Button asChild size="sm" className="h-8">
-          <Link href="/jobs/new">
-            <AudioWaveform className="h-3.5 w-3.5" />
-            New enhancement
-          </Link>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild variant="outline" size="sm" className="h-8">
+            <Link href="/upload">
+              <Upload className="h-3.5 w-3.5" />
+              Upload recordings
+            </Link>
+          </Button>
+          <Button asChild size="sm" className="h-8">
+            <Link href="/jobs/new">
+              <AudioWaveform className="h-3.5 w-3.5" />
+              New enhancement
+            </Link>
+          </Button>
+        </div>
       </div>
       <StatsCards />
       <div className="grid gap-6 lg:grid-cols-2">
