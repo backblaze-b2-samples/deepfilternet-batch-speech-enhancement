@@ -30,21 +30,26 @@ def _split_key(key: str) -> tuple[str, str]:
 
 def _public_url(key: str) -> str | None:
     """Build a public URL for an object key, percent-encoding the path."""
-    if not settings.b2_public_url:
+    if not settings.b2_public_url_base:
         return None
-    return f"{settings.b2_public_url}/{quote(key, safe='/')}"
+    return f"{settings.b2_public_url_base}/{quote(key, safe='/')}"
+
+
+def _endpoint_url() -> str:
+    """Derive the B2 S3 endpoint from the region slug (no hardcoded region)."""
+    return f"https://s3.{settings.b2_region}.backblazeb2.com"
 
 
 @functools.lru_cache(maxsize=1)
 def get_s3_client():
     return boto3.client(
         "s3",
-        endpoint_url=settings.b2_endpoint,
-        aws_access_key_id=settings.b2_key_id,
+        endpoint_url=_endpoint_url(),
+        aws_access_key_id=settings.b2_application_key_id,
         aws_secret_access_key=settings.b2_application_key,
         config=Config(
             signature_version="s3v4",
-            user_agent_extra="b2ai-oss-start",
+            user_agent_extra="b2ai-deepfilternet-batch-speech-enhancement",
         ),
     )
 
@@ -103,9 +108,8 @@ def upload_file(
 
 
 # Short-TTL cache for the full-bucket listing, collapsing the dashboard's
-# repeated/concurrent scans into one. Only the empty prefix is cached (caching
-# client-supplied `?prefix=` values would grow unbounded). Thread-safe: the B2
-# handlers now run in Starlette's threadpool.
+# repeated/concurrent scans into one. Only the empty prefix is cached; the B2
+# handlers run in Starlette's threadpool, so this is thread-safe.
 _LIST_CACHE_TTL_SECONDS = 30.0
 _list_cache: dict[str, tuple[float, list[dict]]] = {}
 _list_cache_lock = Lock()  # guards _list_cache and _list_generation
@@ -143,9 +147,8 @@ def _list_all_objects(prefix: str = "") -> list[dict]:
     cached — callers must treat it as read-only (never sort/mutate in place).
     Raises RuntimeError on S3 failure.
     """
-    # Non-empty prefixes are neither cached nor deduplicated, so routing them
-    # through the single-flight lock would serialize unrelated scans for no
-    # benefit. Scan them directly (bounded by rate limiting).
+    # Non-empty prefixes are neither cached nor deduplicated; scan directly
+    # (bounded by rate limiting) rather than serializing on the single-flight lock.
     if prefix != "":
         return _fetch_all_objects(prefix)
 
@@ -153,10 +156,8 @@ def _list_all_objects(prefix: str = "") -> list[dict]:
     if hit is not None:
         return hit
 
-    # Single-flight: serialize the (empty-prefix) dashboard scans so a
-    # cold/expired/invalidated entry can't trigger a thundering herd of
-    # concurrent full-bucket scans. Waiters re-check the cache and reuse the
-    # winner's result.
+    # Single-flight: serialize empty-prefix dashboard scans so a cold/expired
+    # entry can't trigger a thundering herd. Waiters reuse the winner's result.
     with _list_scan_lock:
         with _list_cache_lock:
             cached = _list_cache.get(prefix)

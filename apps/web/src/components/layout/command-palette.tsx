@@ -9,6 +9,8 @@ import {
   Settings,
   Sparkles,
   FileIcon,
+  AudioWaveform,
+  Library,
   Moon,
   Sun,
 } from "lucide-react";
@@ -25,7 +27,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { getFiles } from "@/lib/api-client";
-import type { FileMetadata } from "@vibe-coding-starter-kit/shared";
+import type { FileMetadata } from "@deepfilternet-batch-speech-enhancement/shared";
 
 interface CommandPaletteProps {
   open: boolean;
@@ -34,6 +36,9 @@ interface CommandPaletteProps {
 
 const routes = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Enhancement Jobs", href: "/jobs", icon: AudioWaveform },
+  { label: "New Enhancement", href: "/jobs/new", icon: AudioWaveform },
+  { label: "Audio Library", href: "/library", icon: Library },
   { label: "Upload", href: "/upload", icon: Upload },
   { label: "Files", href: "/files", icon: FolderOpen },
   { label: "Settings", href: "/settings", icon: Settings },

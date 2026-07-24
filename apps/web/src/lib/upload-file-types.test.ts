@@ -6,6 +6,12 @@ import { ACCEPTED_FILE_TYPES } from "./upload-file-types";
 // services/api/app/service/upload.py. The dropzone allow-list must stay in
 // lockstep with what the server accepts; this fails loudly if either drifts.
 const BACKEND_ALLOWED_TYPES = [
+  "audio/wav",
+  "audio/x-wav",
+  "audio/mpeg",
+  "audio/flac",
+  "audio/x-flac",
+  "audio/ogg",
   "image/jpeg",
   "image/png",
   "image/gif",
@@ -16,8 +22,6 @@ const BACKEND_ALLOWED_TYPES = [
   "application/json",
   "application/zip",
   "video/mp4",
-  "audio/mpeg",
-  "audio/wav",
 ];
 
 describe("ACCEPTED_FILE_TYPES", () => {

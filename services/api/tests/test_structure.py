@@ -82,6 +82,29 @@ def test_boto3_only_in_repo():
     assert violations == [], "boto3 boundary violations:\n" + "\n".join(violations)
 
 
+def test_ml_sdk_only_in_repo():
+    """The ML/audio SDK (df/torch/soundfile/librosa) stays confined to repo/.
+
+    Same containment rule as boto3 — mirrors the plan's invariant so the layering
+    holds and structural tests catch a leak into service/runtime.
+    """
+    ml_roots = ("df", "torch", "torchaudio", "soundfile", "librosa")
+    violations = []
+    for layer in LAYER_ORDER:
+        if layer == "repo":
+            continue
+        layer_dir = APP_ROOT / layer
+        if not layer_dir.exists():
+            continue
+        for pyfile in _get_python_files(layer_dir):
+            for imp in _get_imports(pyfile):
+                root = imp.split(".")[0]
+                if root in ml_roots:
+                    rel = pyfile.relative_to(APP_ROOT.parent)
+                    violations.append(f"{rel}: {imp} imported outside repo/")
+    assert violations == [], "ML SDK boundary violations:\n" + "\n".join(violations)
+
+
 def test_file_size_limits():
     """Verify no Python file exceeds 300 lines."""
     violations = []

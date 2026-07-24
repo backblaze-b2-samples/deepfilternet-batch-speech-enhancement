@@ -1,17 +1,16 @@
 "use client";
 
-import { FileIcon, HardDrive, Upload, Download } from "lucide-react";
+import { AudioWaveform, HardDrive, TrendingUp, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
-import { useFileStats } from "@/lib/queries";
+import { useEnhancementStats } from "@/lib/queries";
 
 export function StatsCards() {
-  const { data: stats, isLoading, error, refetch } = useFileStats();
+  const { data: stats, isLoading, error, refetch } = useEnhancementStats();
 
-  // Surface fetch failures inline rather than rendering "0 files / 0 B" —
-  // that lies to the user about the bucket state when really the API is
-  // just unreachable.
+  // Surface fetch failures inline rather than rendering a false "0" — that would
+  // lie about the bucket state when really the API is unreachable.
   if (error) {
     return (
       <Card>
@@ -22,11 +21,33 @@ export function StatsCards() {
     );
   }
 
+  const ratio = stats?.write_amplification_ratio ?? 0;
+  const avgSnr = stats?.avg_snr_improvement_db;
+
   const cards = [
-    { title: "Total Files", value: stats?.total_files ?? 0, icon: FileIcon },
-    { title: "Storage Used", value: stats?.total_size_human ?? "0 B", icon: HardDrive },
-    { title: "Uploads Today", value: stats?.uploads_today ?? 0, icon: Upload },
-    { title: "Total Downloads", value: stats?.total_downloads ?? 0, icon: Download },
+    {
+      title: "Recordings Enhanced",
+      value: stats?.recordings_enhanced ?? 0,
+      icon: AudioWaveform,
+    },
+    {
+      title: "Enhanced Bytes Written",
+      value: stats?.enhanced_bytes_human ?? "0 B",
+      icon: HardDrive,
+    },
+    {
+      title: "Write Amplification",
+      value: ratio ? `${ratio.toFixed(2)}×` : "—",
+      icon: TrendingUp,
+    },
+    {
+      title: "Avg SNR Improvement",
+      value:
+        avgSnr === null || avgSnr === undefined
+          ? "—"
+          : `${avgSnr > 0 ? "+" : ""}${avgSnr} dB`,
+      icon: Activity,
+    },
   ];
 
   return (

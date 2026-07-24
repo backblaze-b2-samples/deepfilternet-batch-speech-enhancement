@@ -9,7 +9,18 @@ from app.types.formatting import humanize_bytes
 # Note: image/svg+xml is deliberately excluded. SVGs can embed <script>, so a
 # file stored and later served from a public bucket URL would execute in the
 # browser (stored XSS). Re-add only with server-side SVG sanitization.
+# Audio formats lead the allowlist — this app ingests source recordings for
+# denoising. The generic image/PDF/text/archive types are kept so the retained
+# File Explorer stays useful for arbitrary bucket content.
 ALLOWED_TYPES = {
+    # Audio (source recordings)
+    "audio/wav",
+    "audio/x-wav",
+    "audio/mpeg",
+    "audio/flac",
+    "audio/x-flac",
+    "audio/ogg",
+    # Generic (retained File Explorer surface)
     "image/jpeg",
     "image/png",
     "image/gif",
@@ -20,11 +31,15 @@ ALLOWED_TYPES = {
     "application/json",
     "application/zip",
     "video/mp4",
-    "audio/mpeg",
-    "audio/wav",
 }
 
 MIME_EXTENSION_MAP: dict[str, set[str]] = {
+    "audio/wav": {"wav"},
+    "audio/x-wav": {"wav"},
+    "audio/mpeg": {"mp3", "mpeg"},
+    "audio/flac": {"flac"},
+    "audio/x-flac": {"flac"},
+    "audio/ogg": {"ogg", "oga"},
     "image/jpeg": {"jpg", "jpeg", "jfif"},
     "image/png": {"png"},
     "image/gif": {"gif"},
@@ -35,8 +50,6 @@ MIME_EXTENSION_MAP: dict[str, set[str]] = {
     "application/json": {"json"},
     "application/zip": {"zip"},
     "video/mp4": {"mp4"},
-    "audio/mpeg": {"mp3", "mpeg"},
-    "audio/wav": {"wav"},
 }
 
 # Magic-byte signatures for the binary types we accept. The client-declared
@@ -69,8 +82,12 @@ def matches_content_signature(data: bytes, content_type: str) -> bool:
         return data[:3] == b"ID3" or (
             len(data) >= 2 and data[0] == 0xFF and (data[1] & 0xE0) == 0xE0
         )
-    if content_type == "audio/wav":
+    if content_type in ("audio/wav", "audio/x-wav"):
         return data[:4] == b"RIFF" and data[8:12] == b"WAVE"
+    if content_type in ("audio/flac", "audio/x-flac"):
+        return data[:4] == b"fLaC"
+    if content_type == "audio/ogg":
+        return data[:4] == b"OggS"
     return True
 
 _SAFE_FILENAME_RE = re.compile(r"[^\w\-.]")
@@ -161,8 +178,9 @@ def process_upload(
         )
 
     # B2 buckets are always versioned — uploading the same key creates a new
-    # version automatically.  No duplicate rejection needed.
-    key = f"uploads/{safe_name}"
+    # version automatically.  No duplicate rejection needed. Ingested recordings
+    # land under the source/ prefix, where the enhancement job picker finds them.
+    key = f"{settings.source_prefix}{safe_name}"
     result = upload_file(file_data, key, content_type)
     metadata = extract_metadata(
         file_data, safe_name, content_type, result.uploaded_at

@@ -1,57 +1,57 @@
-<!-- last_verified: 2026-06-25 -->
+<!-- last_verified: 2026-07-24 -->
 # Feature: Dashboard
 
 ## Purpose
-Provide an at-a-glance overview of file storage usage and recent upload activity.
+At-a-glance denoising metrics, with **write amplification** as the hero metric.
+`deployment: local`.
 
 ## Used By
 - UI: `/` page (dashboard home)
-- API: `GET /files/stats`, `GET /files`, `GET /files/stats/activity`
+- API: `GET /jobs/stats`, `GET /jobs/stats/activity`, `GET /jobs`
 
 ## Core Functions
-- `apps/web/src/components/dashboard/stats-cards.tsx` — 4 stat cards
-- `apps/web/src/components/dashboard/recent-uploads-table.tsx` — last 10 uploads
-- `apps/web/src/components/dashboard/upload-chart.tsx` — bar chart of uploads per day
-- `apps/web/src/lib/api-client.ts` — `getFileStats()`, `getFiles()`, `getUploadActivity()`
-- `services/api/app/runtime/files.py` — `GET /files/stats` handler
-- `services/api/app/service/files.py` — `get_stats()` business logic
-- `services/api/app/repo/b2_client.py` — `get_upload_stats()` data access
+- `apps/web/src/components/dashboard/stats-cards.tsx` — 4 stat cards (recordings enhanced, enhanced bytes written, write-amplification ×, avg SNR improvement)
+- `apps/web/src/components/dashboard/upload-chart.tsx` — bytes-written bar chart (source vs enhanced MB/day)
+- `apps/web/src/components/dashboard/recent-uploads-table.tsx` — recent jobs table
+- `services/api/app/service/enhancement_stats.py` — `get_enhancement_stats()`, `get_bytes_activity()`
+- `apps/web/src/lib/queries.ts` — `useEnhancementStats`, `useBytesActivity`, `useJobs`
 
 ## Canonical Files
-- Dashboard page layout: `apps/web/src/components/dashboard/stats-cards.tsx`
-- Stats service logic: `services/api/app/service/files.py`
+- Stats logic: `services/api/app/service/enhancement_stats.py`
+- Stat cards: `apps/web/src/components/dashboard/stats-cards.tsx`
 
 ## Inputs
-- None (dashboard loads data automatically)
+- None (loads automatically). Computed from B2 listings of `source/`, `enhanced/`, `jobs/`.
 
 ## Outputs
-- `GET /files/stats` → `UploadStats` (total_files, total_size_bytes, total_size_human, uploads_today, total_downloads)
-- `GET /files` (limit 10) → `FileMetadata[]` for recent uploads table (sorted newest-first)
-- `GET /files/stats/activity?days=7` → `DailyUploadCount[]` for chart (server-side aggregation)
+- `GET /jobs/stats` → `EnhancementStats` (total_jobs, recordings_enhanced, source_bytes(+human),
+  enhanced_bytes(+human), **write_amplification_ratio = enhanced_bytes / source_bytes**,
+  avg_snr_improvement_db, jobs_today)
+- `GET /jobs/stats/activity?days=7` → `DailyBytesWritten[]` (source_bytes, enhanced_bytes per day)
+- `GET /jobs` (for the recent-jobs table) → `JobSummary[]`
 
 ## Flow
-- Page loads → three parallel API calls (stats, recent files, upload activity)
-- Stats cards display total files, storage used, uploads today, total downloads
-- Upload chart displays server-aggregated daily counts for last 7 days as bar chart after activity data is known
-- Recent uploads table shows last 10 files with filename, size, type, date, status badge
+- Page loads → parallel calls for stats, bytes-activity, and recent jobs
+- Stat cards show the four denoising metrics; the ratio is the write-amplification hero number
+- The bar chart plots source vs enhanced MB written per day (last 7 days)
+- The recent-jobs table lists the latest batches with files, avg ΔSNR, and status
 
 ## Edge Cases
-- API unavailable → error states with retry where supported; activity chart does not show a false zero state while loading
-- No files uploaded → empty chart message, empty table message
-- Large file count → stats endpoint paginates through all objects using `ContinuationToken`
+- API unavailable → inline error states with retry (never a false zero)
+- No jobs yet → empty chart + empty recent-jobs table; ratio shows "—"
+- Large object counts → listings paginate via `ContinuationToken` (repo layer, cached)
 
 ## UX States
-- Loading: skeleton placeholders for cards, table, and upload activity chart
-- Empty: "No files uploaded yet" / "No upload data available yet"
+- Loading: skeletons for cards, chart, table
+- Empty: "No bytes written yet" / "No enhancement jobs yet"
 - Loaded: populated cards, chart, table
 
 ## Verification
-- Test files: `services/api/tests/test_upload_activity.py`, `services/api/tests/test_recent_files.py`
-- Required cases: stats with files, stats with empty bucket, API error fallback
+- Test files: covered indirectly by `services/api/tests/test_jobs_jsonl.py` (summary math) and the enhancement-stats service
+- Required cases: ratio computed from source vs enhanced bytes; jobs_today counts today's logs
 - Quick verify command: `pnpm test:api`
-- Full verify command: `pnpm lint && pnpm lint:api && pnpm test:api && pnpm check:structure`
-- Pass criteria: all pytest tests green, no ruff violations
+- Full verify command: `pnpm lint && pnpm build && pnpm lint:api && pnpm test:api && pnpm check:structure`
+- Pass criteria: build green, tests pass
 
 ## Related Docs
-- [ARCHITECTURE.md](../../ARCHITECTURE.md)
-- [App Workflows](../app-workflows.md)
+- [Enhancement Jobs](enhancement-jobs.md) · [ARCHITECTURE.md](../../ARCHITECTURE.md) · [App Workflows](../app-workflows.md)

@@ -49,6 +49,15 @@ def reset_shared_module_state():
 
 
 @pytest.fixture(autouse=True)
+def reset_job_store():
+    """Clear the in-memory live job-status registry before each test."""
+    from app.repo import job_store
+
+    job_store._reset()
+    yield
+
+
+@pytest.fixture(autouse=True)
 def isolate_download_counter(tmp_path, monkeypatch):
     """Redirect the persisted download counter to a temp file per test and
     reset the in-memory counter to 0. Keeps tests hermetic and prevents

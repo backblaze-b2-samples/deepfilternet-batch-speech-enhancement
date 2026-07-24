@@ -18,7 +18,14 @@ from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from starlette.middleware.base import BaseHTTPMiddleware  # noqa: E402
 
 from app.config import settings  # noqa: E402
-from app.runtime import files, health, metrics, ratelimit, upload  # noqa: E402
+from app.runtime import (  # noqa: E402
+    enhancement,
+    files,
+    health,
+    metrics,
+    ratelimit,
+    upload,
+)
 
 # --- Startup validation ---
 # Required B2 settings are declared with empty-string defaults so that
@@ -27,18 +34,20 @@ from app.runtime import files, health, metrics, ratelimit, upload  # noqa: E402
 # with a human-readable message — uvicorn surfaces this as the first log
 # line, so misconfiguration is obvious within seconds rather than turning
 # into mysterious 500s on the first request.
+# B2_PUBLIC_URL_BASE is intentionally NOT required — it only builds public
+# object URLs for a public bucket; the app runs fine on presigned URLs alone.
 REQUIRED_B2_SETTINGS = (
-    ("b2_key_id", "B2_KEY_ID"),
+    ("b2_application_key_id", "B2_APPLICATION_KEY_ID"),
     ("b2_application_key", "B2_APPLICATION_KEY"),
     ("b2_bucket_name", "B2_BUCKET_NAME"),
-    ("b2_endpoint", "B2_ENDPOINT"),
+    ("b2_region", "B2_REGION"),
 )
 
 # Exact placeholder strings shipped in .env.example. If a user copied
 # the example and didn't edit it, Settings will pass the "non-empty"
 # check above but every B2 call will still 403. Catch that here.
 PLACEHOLDER_VALUES = frozenset({
-    "your_b2_endpoint",
+    "your_region",
     "your_key_id",
     "your_application_key",
     "your-bucket-name",
@@ -104,8 +113,8 @@ logger = logging.getLogger("api")
 # --- App setup ---
 
 app = FastAPI(
-    title="OSS Starter Kit API",
-    description="File upload and management API backed by Backblaze B2",
+    title="DeepFilterNet Speech Enhancement API",
+    description="Batch speech denoising API backed by DeepFilterNet and Backblaze B2",
     version="0.1.0",
     lifespan=lifespan,
     # Interactive docs are toggleable so production can hide the API surface.
@@ -154,4 +163,5 @@ app.add_middleware(
 app.include_router(health.router, tags=["health"])
 app.include_router(upload.router, tags=["upload"])
 app.include_router(files.router, tags=["files"])
+app.include_router(enhancement.router, tags=["enhancement"])
 app.include_router(metrics.router, tags=["metrics"])

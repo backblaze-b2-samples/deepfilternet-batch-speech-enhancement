@@ -1,8 +1,11 @@
-<!-- last_verified: 2026-06-25 -->
+<!-- last_verified: 2026-07-24 -->
 # Feature: File Upload
 
 ## Purpose
-Upload files from the browser to Backblaze B2 with real-time progress tracking.
+Ingest source recordings (and other files) from the browser to Backblaze B2 with
+real-time progress tracking. This app routes uploads to the `source/` prefix, where the
+enhancement job picker finds them. Audio formats (WAV/MP3/FLAC/OGG) lead the allow-list;
+the generic image/PDF/text/archive types are retained for the File Explorer.
 
 ## Used By
 - UI: `/upload` page, upload form component
@@ -29,7 +32,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 
 ## Outputs
 - `FileUploadResponse`: key, filename, size, content_type, uploaded_at, url, metadata
-- Side effects: file stored in B2 bucket under `uploads/{sanitized_filename}`
+- Side effects: file stored in B2 bucket under `source/{sanitized_filename}` (configurable via `SOURCE_PREFIX`)
 
 ## Flow
 - User drops or selects files in dropzone
@@ -42,7 +45,7 @@ Upload files from the browser to Backblaze B2 with real-time progress tracking.
 - API reads file in 1MB chunks with streaming size enforcement (max 100MB)
 - API rejects empty files
 - API verifies the leading bytes match the declared type for binary formats (magic-byte signature check)
-- API uses key: `uploads/{sanitized_filename}`
+- API uses key: `source/{sanitized_filename}` (the ingest prefix)
 - API calls `put_object` to B2
 - API extracts file metadata (checksums, image dimensions, PDF info)
 - API returns `FileUploadResponse`

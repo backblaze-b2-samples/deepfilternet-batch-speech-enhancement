@@ -1,8 +1,17 @@
-<!-- last_verified: 2026-07-20 -->
+<!-- last_verified: 2026-07-24 -->
 # Feature: Metadata Extraction
 
 ## Purpose
-Extract rich metadata from uploaded files and surface it both at upload time and for already-stored objects.
+Extract rich metadata (checksums + image/PDF fields) for the **generic File Explorer**
+detail view. This module is **retained from the starter kit** for the full-bucket
+explorer; it is not the feature story of this app.
+
+> **Audio metadata note.** Duration / sample rate / channels for recordings are **not**
+> produced by this module. They come from the DeepFilterNet adapter's `probe_audio()`
+> (`repo/denoiser.py`, which owns soundfile) and are surfaced by the **Audio Library**,
+> not by the generic file-detail endpoint. This module degrades gracefully on audio: it
+> returns checksums/size/extension and simply omits image/PDF fields, so it never crashes
+> on a WAV/MP3. See [Audio Library](audio-library.md) and [Speech Enhancement](speech-enhancement.md).
 
 ## Used By
 - API: `POST /upload` (called after B2 upload) — returns the full `FileMetadataDetail` in the upload response
@@ -31,7 +40,7 @@ Extract rich metadata from uploaded files and surface it both at upload time and
 - `FileMetadataDetail`: filename, size_bytes, size_human, mime_type, extension, md5, sha256, uploaded_at
 - Image-specific (optional): image_width, image_height, exif dict
 - PDF-specific (optional): pdf_pages, pdf_author, pdf_title
-- Audio/Video (optional): duration_seconds, codec, bitrate — **reserved in the model but not yet extracted**; `extract_metadata()` only populates image and PDF fields today, so these are always null
+- Audio/Video (optional): duration_seconds, codec, bitrate — **reserved in the model but not populated by this module**; audio duration/sample-rate/channels are probed by `repo/denoiser.probe_audio()` and shown in the Audio Library instead
 
 ## Flow
 - Upload route receives file and stores in B2

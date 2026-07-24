@@ -3,18 +3,30 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ApiError,
+  createJob,
   deleteFile,
+  deleteJob,
+  getBytesActivity,
+  getEnhancementStats,
   getFileDetail,
   getFiles,
   getFileStats,
   getHealth,
+  getJob,
+  getJobs,
+  getLibrary,
   getPreviewUrl,
   getUploadActivity,
+  rerunJob,
 } from "@/lib/api-client";
 import type {
+  CreateJobRequest,
+  EnhancementJob,
   FileMetadata,
   FileMetadataDetail,
-} from "@vibe-coding-starter-kit/shared";
+  JobSummary,
+  LibraryItem,
+} from "@deepfilternet-batch-speech-enhancement/shared";
 
 // Single source of truth for query keys. Keep these tightly scoped so that
 // invalidating "files" doesn't blow away unrelated caches, and so an IDE
@@ -29,6 +41,13 @@ export const qk = {
   preview: (key: string) => [...qk.all, "preview", key] as const,
   detail: (key: string) => [...qk.all, "detail", key] as const,
   health: () => [...qk.all, "health"] as const,
+  // Enhancement domain
+  jobs: () => [...qk.all, "jobs"] as const,
+  job: (jobId: string) => [...qk.all, "job", jobId] as const,
+  enhancementStats: () => [...qk.all, "enhancement-stats"] as const,
+  bytesActivity: (days: number) =>
+    [...qk.all, "bytes-activity", days] as const,
+  library: () => [...qk.all, "library"] as const,
 };
 
 export type Health = Awaited<ReturnType<typeof getHealth>>;
@@ -102,5 +121,74 @@ export function useDeleteFile() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.all });
     },
+  });
+}
+
+// --- Enhancement jobs / library / denoising stats ---
+
+export function useEnhancementStats() {
+  return useQuery({
+    queryKey: qk.enhancementStats(),
+    queryFn: getEnhancementStats,
+  });
+}
+
+export function useBytesActivity(days = 7) {
+  return useQuery({
+    queryKey: qk.bytesActivity(days),
+    queryFn: () => getBytesActivity(days),
+  });
+}
+
+export function useJobs() {
+  return useQuery<JobSummary[], ApiError>({
+    queryKey: qk.jobs(),
+    queryFn: getJobs,
+  });
+}
+
+export function useJob(jobId: string | undefined) {
+  return useQuery<EnhancementJob, ApiError>({
+    queryKey: qk.job(jobId ?? ""),
+    queryFn: () => getJob(jobId as string),
+    enabled: !!jobId,
+  });
+}
+
+export function useCreateJob() {
+  const qc = useQueryClient();
+  return useMutation<EnhancementJob, ApiError, CreateJobRequest>({
+    mutationFn: (body) => createJob(body),
+    // A new job writes enhanced outputs + a log; invalidate everything B2-backed.
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.all });
+    },
+  });
+}
+
+export function useRerunJob() {
+  const qc = useQueryClient();
+  return useMutation<EnhancementJob, ApiError, string>({
+    mutationFn: (jobId) => rerunJob(jobId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.all });
+    },
+  });
+}
+
+export function useDeleteJob() {
+  const qc = useQueryClient();
+  return useMutation<{ deleted: boolean; job_id: string }, ApiError, string>({
+    mutationFn: (jobId) => deleteJob(jobId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.all });
+    },
+  });
+}
+
+export function useLibrary() {
+  return useQuery<LibraryItem[], ApiError>({
+    queryKey: qk.library(),
+    queryFn: getLibrary,
   });
 }

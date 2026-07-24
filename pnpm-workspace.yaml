@@ -1,7 +1,12 @@
 packages:
   - "apps/*"
   - "packages/*"
+# Dependencies whose install/build scripts pnpm is allowed to run. pnpm blocks
+# post-install scripts by default; these are the ones this workspace needs
+# (esbuild powers vitest; sharp powers next/image; msw and unrs-resolver ship
+# native binaries). Leaving esbuild unapproved makes `pnpm install` exit non-zero.
 allowBuilds:
+  esbuild: true
   msw: true
   sharp: true
   unrs-resolver: true

@@ -1,10 +1,16 @@
 import type {
+  CreateJobRequest,
+  DailyBytesWritten,
   DailyUploadCount,
+  EnhancementJob,
+  EnhancementStats,
   FileMetadata,
   FileMetadataDetail,
   FileUploadResponse,
+  JobSummary,
+  LibraryItem,
   UploadStats,
-} from "@vibe-coding-starter-kit/shared";
+} from "@deepfilternet-batch-speech-enhancement/shared";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -135,6 +141,50 @@ export async function getFiles(prefix = "", limit = 100) {
 
 export async function getFileStats() {
   return apiFetch<UploadStats>("/files/stats");
+}
+
+// --- Enhancement jobs / library / denoising stats ---
+
+export async function getEnhancementStats() {
+  return apiFetch<EnhancementStats>("/jobs/stats");
+}
+
+export async function getBytesActivity(days = 7) {
+  return apiFetch<DailyBytesWritten[]>(`/jobs/stats/activity?days=${days}`);
+}
+
+export async function getJobs() {
+  return apiFetch<JobSummary[]>("/jobs");
+}
+
+export async function getJob(jobId: string) {
+  return apiFetch<EnhancementJob>(`/jobs/${encodeURIComponent(jobId)}`);
+}
+
+export async function createJob(body: CreateJobRequest) {
+  return apiFetch<EnhancementJob>("/jobs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function rerunJob(jobId: string) {
+  return apiFetch<EnhancementJob>(
+    `/jobs/${encodeURIComponent(jobId)}/rerun`,
+    { method: "POST" }
+  );
+}
+
+export async function deleteJob(jobId: string) {
+  return apiFetch<{ deleted: boolean; job_id: string }>(
+    `/jobs/${encodeURIComponent(jobId)}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function getLibrary() {
+  return apiFetch<LibraryItem[]>("/library");
 }
 
 export async function getUploadActivity(days = 7) {

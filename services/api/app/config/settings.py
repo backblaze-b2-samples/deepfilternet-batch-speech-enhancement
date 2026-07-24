@@ -2,11 +2,28 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    b2_endpoint: str = "https://s3.us-west-004.backblazeb2.com"
-    b2_key_id: str = ""
+    # B2 region slug (e.g. "us-west-004"). The S3 endpoint is derived from it in
+    # repo/b2_client.py as https://s3.<region>.backblazeb2.com — no hardcoded
+    # endpoint or region lives anywhere else. Empty by default so `Settings()`
+    # never raises at import; startup validation fails fast on a real run.
+    b2_region: str = ""
+    b2_application_key_id: str = ""
     b2_application_key: str = ""
     b2_bucket_name: str = ""
-    b2_public_url: str = ""
+    # OPTIONAL. Only used to build public object URLs for a public bucket; the
+    # app runs fine without it (presigned URLs cover private buckets).
+    b2_public_url_base: str = ""
+
+    # --- Speech enhancement (DeepFilterNet) ---
+    # Object-key prefixes for the denoise workflow. Settings-configurable so a
+    # fork can share a bucket with other workloads.
+    source_prefix: str = "source/"
+    enhanced_prefix: str = "enhanced/"
+    jobs_prefix: str = "jobs/"
+    # Bound a single demo batch so a synchronous run stays responsive.
+    max_batch_files: int = 20
+    # Per-file source size ceiling for decoding into memory (100 MB).
+    max_audio_bytes: int = 100 * 1024 * 1024
 
     api_port: int = 8000
     # Interactive API docs (/docs, /redoc, /openapi.json). On by default for

@@ -3,6 +3,12 @@
 
 This is the authoritative control surface for all coding agents. Read this first.
 
+This app is **DeepFilterNet Speech Enhancement**: batch speech denoising with the
+local DeepFilterNet model, with source recordings, cleaned 48 kHz WAV outputs, and
+per-batch JSONL logs all stored on Backblaze B2. It was scaffolded from the vibe
+coding starter kit; the sections below describe both the retained starter contract and
+the denoising domain added on top.
+
 ## 1. Repository Map
 
 ```
@@ -13,6 +19,15 @@ docs/              System of record (features, workflows, security, reliability)
 docs/exec-plans/   Execution plans and tech debt tracker
 infra/railway/     Deployment config
 ```
+
+Domain modules added for this app:
+- `services/api/app/repo/denoiser.py` — DeepFilterNet adapter (the ONLY place
+  `df`/`torch`/`soundfile`/`librosa` are imported; mirrors the boto3-in-repo rule).
+- `services/api/app/repo/job_store.py` — in-memory live job status (durable record is B2 JSONL).
+- `services/api/app/service/{enhancement,jobs,enhancement_stats,library}.py` — job
+  orchestration, JSONL (de)serialization + read/delete, dashboard stats, before/after pairing.
+- `services/api/app/runtime/enhancement.py` — `/jobs*`, `/library`, `/jobs/stats*` routes.
+- Frontend: `/jobs`, `/jobs/new`, `/jobs/[jobId]`, `/library` + `components/{jobs,library,audio}/`.
 
 ## 2. Building on This Starter Kit
 

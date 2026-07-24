@@ -6,20 +6,22 @@ product
 
 ## Users
 
-AI coding agents and "vibe coders" (developers who lean on AI to move fast) who clone
-this kit as the foundation for a new full-stack app. Their context: they want to skip
-the boilerplate loop (dashboard, upload, file browser, cloud storage wiring) and go
-straight to building their app's unique features. They read the repo, keep the shared
-scaffolding, and rebrand + rewrite the dashboard for their own use case.
+Podcast studios, broadcast archives, and speech-dataset curators who need a
+reproducible, auditable **batch speech-denoising** step. Their context: noisy speech
+recordings pile up, and downstream jobs (transcription, TTS, distribution) want clean
+audio they can pull straight from object storage. They want to run enhancement locally
+(no per-minute API), keep every cleaned artifact and processing log on B2, and see how
+much storage the pipeline generates.
 
 ## Product Purpose
 
-A production-ready full-stack starter kit (Next.js 16 + React 19 + Tailwind v4 +
-shadcn/ui frontend, FastAPI backend) with Backblaze B2 cloud storage integrated out of
-the box. It ships a dashboard, drag-and-drop upload, and a file browser so builders
-start from a working app, not a blank page. Success = a builder can clone it, run it,
-rebrand it via one config file, and trust every screen enough to build on top without
-first fixing it.
+A full-stack app (Next.js 16 + React 19 + Tailwind v4 + shadcn/ui frontend, FastAPI
+backend) that denoises speech with the local **DeepFilterNet** model and stores source
+recordings, cleaned 48 kHz WAV outputs, and per-batch JSONL logs on **Backblaze B2** —
+on B2 credentials alone. It ships a denoising dashboard (with write amplification as the
+hero metric), enhancement jobs, an audio library with before/after playback, and the
+retained upload + file-explorer surface. Success = a user can ingest recordings, run a
+batch, hear the improvement, and download clean audio — trusting every screen.
 
 ## Brand Personality
 
